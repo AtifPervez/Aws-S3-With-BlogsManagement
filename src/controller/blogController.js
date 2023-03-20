@@ -1,7 +1,7 @@
 
 const authorModel = require("../model/authorModel");
 const blogModel = require('../model/blogModel')
-const moment=require('moment')
+const moment = require('moment')
 
 const createBlog = async (req, res) => {
 
@@ -64,57 +64,123 @@ const getBlog = async (req, res) => {
 }
 
 const updateBlog = async (req, res) => {
-try{
-    
-    let id = req.params.id
-    let checkBlogId = await blogModel.findOne({id})
-    if (!checkBlogId) return res.status(404).send({ status: false, msg: 'no such blogId exists' })
-    let data = req.query
-   let date=moment().format("DD/MM/YYYY")
-    let updateData = await blogModel.findByIdAndUpdate(id,
-        {
-            title: data.title,
-            body: data.body,
-            tags: data.tags,
-            subcategory: data.subcategory,
-            isPublished:true,
-            publishedAt:date
-        },{new:true})
+    try {
 
-    res.status(200).send({status:true, updatedBlog: updateData })
+        let id = req.params.id
+        let checkBlogId = await blogModel.findOne({ _id: id })
+        if (!checkBlogId) return res.status(404).send({ status: false, msg: 'no such blogId exists' })
 
+        if (checkBlogId.isDeleted == true) return res.status(400).send({ status: false, msg: 'this blog is deleted' })
 
+        let data = req.query
+        let date = moment().format("DD/MM/YYYY")
+        let updateData = await blogModel.findByIdAndUpdate(id,
+            {
+                title: data.title,
+                body: data.body,
+                tags: data.tags,
+                subcategory: data.subcategory,
+                isPublished: true,
+                publishedAt: date
+            }, { new: true })
 
-} catch (error) {
-    return res.status(500).send({ status: false, msg: error.msg })
-}
+        res.status(200).send({ status: true, updatedBlog: updateData })
 
 
 
-}
-
-const deleteBlog=async(req,res)=>{
-     let id=req.params.id
-
-     let checkBlog=await blogModel.findById(id)
-     if(!checkBlog) res.status(404).send({status:false,msg:'no such blog exist in the DB'})
-
-     let deleteData=await blogModel.findByIdAndDelete(id)
-
-     res.send({msg:deleteData})
-
-
+    } catch (error) {
+        return res.status(500).send({ status: false, msg: error.msg })
+    }
 
 
 
 }
 
+const deleteBlog = async (req, res) => {
+    try {
+        let id = req.params.id
+
+        let checkBlog = await blogModel.findById({ _id: id })
+        if (!checkBlog) res.status(404).send({ status: false, msg: 'no such blog exist in the DB' })
+
+        let deleteData = await blogModel.findByIdAndUpdate({ _id: id }, { $set: { isDeleted: true, deletedAt: Date.now() } }, { new: true })
+
+        res.status(200).send({ status: true, msg: deleteData })
+
+
+    } catch (error) {
+        return res.status(500).send({ status: false, msg: error.msg })
+    }
+
+}
+
+const deleteBlogByQueryParams = async (req, res) => {
+    try {
+        let data = req.query;
+
+        const deleteByQuery = await blogModel.updateMany(
+            { $and: [data, { isDeleted: false }] },
+
+            { $set: { isDeleted: true, DeletedAt: new Date() } },
+
+            { new: true }
+        );
+
+        if (deleteByQuery.modifiedCount == 0)
+            return res
+                .status(400)
+                .send({ status: false, msg: "The Blog is already Deleted" });
+
+        res.status(200).send({ status: true, msg: deleteByQuery });
+    } catch (err) {
+        res.status(500).send({ error: err.message });
+    }
+
+}
+
+//get blogs by params with authentication and authorization
+
+const getBlogByParams = async (req, res) => {
+    try {
+        let _id = req.params._id
+
+        let check_id = await blogModel.findOne({ _id: _id })
+        if (!check_id) return res.status(404).send({ status: false, msg: 'no such blog_id exists' })
+
+        let getBlogData = await blogModel.findById({ _id: _id })
+
+        return res.status(200).send({ status: true, msg: 'Get Blog details', data: getBlogData })
+
+
+
+    } catch (error) {
+        return res.status(500).send({ status: false, msg: error.msg })
+    }
+
+}
+module.exports = { createBlog, getBlog, updateBlog, deleteBlog, deleteBlogByQueryParams, getBlogByParams }
 
 
 
 
 
-module.exports = { createBlog, getBlog, updateBlog,deleteBlog }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

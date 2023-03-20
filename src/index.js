@@ -6,7 +6,7 @@ const app=express()
 
 app.use(bodyParser.json())
 mongoose.connect('mongodb+srv://atifpervez:34BmDa5XVvtznQvO@code.8mvlc.mongodb.net/blogManagement')
-.then(()=>console.log("mongoDb is connected"))
+.then(()=>console.log("MongoDb is connected"))
 .catch((err)=>console.log(err))
 app.use('/',router)
 
