@@ -22,6 +22,8 @@ router.post('/createAuthor_auth',middleWare.auth,authorController.createAuthor)
 
 router.get('/getAuthorByParams/:_id',middleWare.auth,authorController.getAuthorByParams)
 
+router.post('/awsAuthorImage',authorController.awsAuthorImage)
+
 
 
 
